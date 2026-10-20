@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>年齡與憂鬱、焦慮、壓力的關係</title>
+<style>
+:root{--bg:#f7f8fa;--card:#fff;--tx:#1f2933;--mut:#617080;--bd:#dde2e8;--ac:#2b6cb0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;line-height:1.6}
+main{max-width:920px;margin:0 auto;padding:24px 16px 48px}
+h1{margin:0 0 6px;font-size:26px}
+.sub{color:var(--mut);margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:16px;margin-bottom:16px}
+.ctrl{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center;margin-bottom:12px}
+.tabs button{border:1px solid var(--bd);background:#fff;padding:7px 16px;cursor:pointer;font:inherit}
+.tabs button:first-child{border-radius:8px 0 0 8px}.tabs button:last-child{border-radius:0 8px 8px 0;border-left:0}
+.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+label{margin-right:14px;cursor:pointer;white-space:nowrap}
+.ctrl b{margin-right:8px}
+svg{width:100%;height:auto;display:block}
+svg text{font-family:inherit;fill:var(--tx);font-size:12px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--mut);margin-top:6px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{border-bottom:1px solid var(--bd);padding:7px 8px;text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{background:#eef2f6}
+.scroll{overflow-x:auto}
+#tip{position:fixed;pointer-events:none;background:#1f2933;color:#fff;padding:7px 10px;border-radius:6px;font-size:13px;display:none;z-index:9;line-height:1.5}
+.note h2,.card h2{font-size:17px;margin:0 0 8px}
+.note ul{margin:0;padding-left:20px}.note li{margin-bottom:6px}
+</style>
+</head>
+<body>
+<main>
+<h1>年齡與憂鬱、焦慮、壓力的關係</h1>
+<p class="sub">DASS-42 含憂鬱、焦慮、壓力三個分量表，各 14 題、每題以 0–3 分計（過去一週的符合程度），分量表分數為 14 題加總（0–42 分），分數越高表示症狀越嚴重。</p>
+
+<div class="card">
+  <div class="ctrl">
+    <div class="tabs" id="tabs">
+      <button data-m="mean" class="on">年齡對各分量的平均數</button>
+      <button data-m="sev">各年齡層嚴重度分布</button>
+    </div>
+  </div>
+  <div class="ctrl" id="multi"><b>分量表（可複選）</b></div>
+  <div class="ctrl" id="single" hidden><b>分量表（單選）</b></div>
+  <div id="chart"></div>
+  <div class="legend" id="legend"></div>
+</div>
+
+<div class="card scroll"><h2 id="ttl"></h2><table id="tbl"></table></div>
+
+<div class="card note">
+<h2>註解</h2>
+<ul>
+<li><b>分量表總分</b>：原始作答 1–4 分減 1 後轉為 0–3 分，每個分量表 14 題加總，範圍 0–42。DASS-42 不需再乘以 2（乘以 2 是 DASS-21 的做法）。</li>
+<li><b>平均數與標準差（SD）</b>：平均數表示該年齡組的整體水準；SD 表示組內個體差異，SD 越大代表分數越分散。</li>
+<li><b>95% 信賴區間</b>：以「平均數 ± t臨界值 × SD ÷ √n」計算，表示在抽樣誤差下，母體平均數可能落入的範圍。區間越短估計越精確；兩組區間不重疊可作為差異的參考，但並非正式檢定。</li>
+<li><b>嚴重度等級</b>：依 DASS-42 手冊的常用切截點分為正常、輕度、中度、重度、極重度。憂鬱：0–9／10–13／14–20／21–27／28+；焦慮：0–7／8–9／10–14／15–19／20+；壓力：0–14／15–18／19–25／26–33／34+。百分比＝該等級人數 ÷ 該年齡組總人數。</li>
+<li><b>注意事項 1：樣本代表性</b>。資料來自自願上網填答者（2017–2019），多為想取得個人化結果的人，並非隨機抽樣，結果不能推論到一般人口；極重度比例偏高也可能與此自選偏誤有關。</li>
+<li><b>注意事項 2：各組人數懸殊</b>。10–29 歲占絕大多數，60 歲以上僅 28 人，70–79 歲僅 3 人（信賴區間極寬，不宜解讀）。7–9、80 歲以上無資料，已省略。</li>
+<li><b>注意事項 3：人數不一致</b>。來源表中 20–29 歲在平均數表為 2175 人、等級表為 2176 人；30–39 歲分別為 360 與 362 人。本頁圖表一標籤使用平均數表的人數，圖表二使用等級表的人數，差異原因請回頭核對原始資料。</li>
+<li><b>注意事項 4：相關不等於因果</b>。此為橫斷面資料，只能描述年齡組間的差異，無法說明年齡造成差異，也可能受世代、填答動機等因素影響。DASS 為篩檢工具，不能作為臨床診斷。</li>
+</ul>
+</div>
+</main>
+<div id="tip"></div>
+
+<script>
+const AG=['10–19','20–29','30–39','40–49','50–59','60–69','70–79'];
+const N=[1421,2175,360,120,68,25,3];
+const SC={
+ d:{name:'憂鬱',color:'#2b6cb0',m:[22.76213934,20.04321839,17.48888889,14.74166667,14.23529412,14.52,25.66666667],
+    sd:[12.03702045,11.88018879,12.62243168,12.31484438,12.18405815,14.71994112,17.89785834],
+    lv:[[252,105,260,247,557],[506,229,430,359,652],[127,38,55,43,99],[52,14,19,11,24],[34,6,11,6,11],[14,2,2,1,6],[1,0,0,0,2]]},
+ a:{name:'焦慮',color:'#dd6b20',m:[18.30119634,15.36229885,11.12222222,9.516666667,7.764705882,9,8.666666667],
+    sd:[10.20656679,9.711062852,9.07146222,9.017241499,8.199231211,9.746794345,10.69267662],
+    lv:[[248,86,235,219,633],[537,170,439,341,689],[163,33,68,37,61],[63,12,17,9,19],[42,5,8,6,7],[15,1,3,1,5],[2,0,0,0,1]]},
+ s:{name:'壓力',color:'#2f855a',m:[22.66502463,20.56321839,18.33611111,17.18333333,15.22058824,14.44,21],
+    sd:[10.31082269,10.18307707,10.68885481,10.87050078,10.46650035,10.89755324,15.62049935],
+    lv:[[346,160,318,344,253],[675,276,521,434,270],[149,56,55,64,38],[54,17,18,16,15],[39,7,11,6,5],[14,4,3,2,2],[1,0,0,2,0]]}
+};
+const LV=['正常','輕度','中度','重度','極重度'];
+const LC=['#9ad3b0','#f2e07a','#f5b567','#e8744f','#a3262a'];
+const T=[0,12.706,4.303,3.182,2.776,2.571,2.447,2.365,2.306,2.262,2.228,2.201,2.179,2.160,2.145,2.131,2.120,2.110,2.101,2.093,2.086,2.080,2.074,2.069,2.064,2.060,2.056,2.052,2.048,2.045,2.042];
+const tc=df=>df<=30?T[df]:df<=60?2.0:df<=120?1.98:1.96;
+const ci=(k,i)=>{const h=tc(N[i]-1)*SC[k].sd[i]/Math.sqrt(N[i]);return[SC[k].m[i]-h,SC[k].m[i]+h]};
+const tot=(k,i)=>SC[k].lv[i].reduce((a,b)=>a+b,0);
+const f=(x,d=2)=>x.toFixed(d);
+const st={mode:'mean',multi:{d:1,a:1,s:1},single:'d'};
+const $=id=>document.getElementById(id);
+
+// controls
+const keys=Object.keys(SC);
+$('multi').innerHTML+=keys.map(k=>`<label><input type="checkbox" name="mc" value="${k}" checked> ${SC[k].name}</label>`).join('');
+$('single').innerHTML+=keys.map(k=>`<label><input type="radio" name="sr" value="${k}" ${k=='d'?'checked':''}> ${SC[k].name}</label>`).join('');
+$('multi').onchange=e=>{
+  const k=e.target.value;st.multi[k]=e.target.checked?1:0;
+  if(!Object.values(st.multi).some(v=>v)){st.multi[k]=1;e.target.checked=true;}
+  render();
+};
+$('single').onchange=e=>{st.single=e.target.value;render();};
+$('tabs').onclick=e=>{
+  const m=e.target.dataset.m;if(!m)return;st.mode=m;
+  [...$('tabs').children].forEach(b=>b.classList.toggle('on',b.dataset.m==m));
+  $('multi').hidden=m!='mean';$('single').hidden=m!='sev';render();
+};
+
+// tooltip
+const tip=$('tip');
+document.addEventListener('mousemove',e=>{
+  const t=e.target.closest&&e.target.closest('[data-tip]');
+  if(!t){tip.style.display='none';return;}
+  tip.innerHTML=t.dataset.tip;tip.style.display='block';
+  tip.style.left=Math.min(e.clientX+14,innerWidth-tip.offsetWidth-8)+'px';
+  tip.style.top=(e.clientY+14)+'px';
+});
+
+function chartMean(){
+  const W=820,H=420,L=52,R=20,Tp=20,B=60,pw=W-L-R,ph=H-Tp-B;
+  const x=i=>L+pw*(i+.5)/AG.length,y=v=>Tp+ph*(1-v/42);
+  let s=`<svg viewBox="0 0 ${W} ${H}">`;
+  for(let v=0;v<=42;v+=6)s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="#e3e7ec"/><text x="${L-8}" y="${y(v)+4}" text-anchor="end">${v}</text>`;
+  s+=`<text transform="translate(14 ${Tp+ph/2}) rotate(-90)" text-anchor="middle">分量表總分（0–42）</text>`;
+  AG.forEach((g,i)=>s+=`<text x="${x(i)}" y="${H-B+20}" text-anchor="middle">${g}</text><text x="${x(i)}" y="${H-B+36}" text-anchor="middle" fill="#617080">（n=${N[i]}）</text>`);
+  const act=keys.filter(k=>st.multi[k]);
+  act.forEach((k,j)=>{
+    const o=(j-(act.length-1)/2)*9,c=SC[k].color;
+    s+=`<polyline fill="none" stroke="${c}" stroke-width="2" points="${AG.map((_,i)=>(x(i)+o)+','+y(SC[k].m[i])).join(' ')}"/>`;
+    AG.forEach((g,i)=>{
+      const[lo,hi]=ci(k,i),cx=x(i)+o;
+      s+=`<g stroke="${c}" stroke-width="1.5"><line x1="${cx}" x2="${cx}" y1="${y(Math.max(0,lo))}" y2="${y(Math.min(42,hi))}"/><line x1="${cx-4}" x2="${cx+4}" y1="${y(Math.max(0,lo))}" y2="${y(Math.max(0,lo))}"/><line x1="${cx-4}" x2="${cx+4}" y1="${y(Math.min(42,hi))}" y2="${y(Math.min(42,hi))}"/></g>`;
+      s+=`<circle cx="${cx}" cy="${y(SC[k].m[i])}" r="5" fill="${c}" stroke="#fff" stroke-width="1.5" style="cursor:pointer" data-tip="<b>${SC[k].name}</b>｜${g}<br>平均數 ${f(SC[k].m[i])}<br>標準差 ${f(SC[k].sd[i])}"/>`;
+    });
+  });
+  $('chart').innerHTML=s+'</svg>';
+  $('legend').innerHTML=act.map(k=>`<span><i style="background:${SC[k].color}"></i>${SC[k].name}</span>`).join('')+'<span>誤差線＝95% 信賴區間</span>';
+}
+
+function chartSev(){
+  const k=st.single,W=820,rh=50,Tp=10,L=150,R=20,B=40,H=Tp+rh*AG.length+B,pw=W-L-R;
+  let s=`<svg viewBox="0 0 ${W} ${H}">`;
+  for(let p=0;p<=100;p+=20)s+=`<line x1="${L+pw*p/100}" x2="${L+pw*p/100}" y1="${Tp}" y2="${H-B}" stroke="#e3e7ec"/><text x="${L+pw*p/100}" y="${H-B+18}" text-anchor="middle">${p}%</text>`;
+  s+=`<text x="${L+pw/2}" y="${H-6}" text-anchor="middle">占該年齡組人數的比例</text>`;
+  AG.forEach((g,i)=>{
+    const y0=Tp+rh*i+8,n=tot(k,i);let acc=0;
+    s+=`<text x="${L-10}" y="${y0+22}" text-anchor="end">${g}（n=${n}）</text>`;
+    SC[k].lv[i].forEach((c,j)=>{
+      const p=c/n*100,w=pw*p/100;
+      if(w>0)s+=`<rect x="${L+pw*acc/100}" y="${y0}" width="${w}" height="32" fill="${LC[j]}" stroke="#fff" data-tip="<b>${SC[k].name}</b>｜${g}<br>${LV[j]}：${f(p,1)}%（${c} 人）"/>`;
+      if(p>=6)s+=`<text x="${L+pw*(acc+p/2)/100}" y="${y0+21}" text-anchor="middle" style="fill:${j==4?'#fff':'#1f2933'};pointer-events:none">${f(p,0)}%</text>`;
+      acc+=p;
+    });
+  });
+  $('chart').innerHTML=s+'</svg>';
+  $('legend').innerHTML=LV.map((l,j)=>`<span><i style="background:${LC[j]}"></i>${l}</span>`).join('');
+}
+
+function table(){
+  if(st.mode=='mean'){
+    const act=keys.filter(k=>st.multi[k]);
+    $('ttl').textContent='統計表：各年齡組分量表平均數';
+    let h='<thead><tr><th rowspan="2">年齡組</th><th rowspan="2">人數</th>'+act.map(k=>`<th colspan="3" style="text-align:center">${SC[k].name}</th>`).join('')+'</tr><tr>'+act.map(()=>'<th>平均數</th><th>標準差</th><th>95% CI</th>').join('')+'</tr></thead><tbody>';
+    AG.forEach((g,i)=>{h+=`<tr><td>${g}</td><td>${N[i]}</td>`+act.map(k=>{const[l,u]=ci(k,i);return`<td>${f(SC[k].m[i])}</td><td>${f(SC[k].sd[i])}</td><td>[${f(l)}, ${f(u)}]</td>`}).join('')+'</tr>'});
+    $('tbl').innerHTML=h+'</tbody>';
+  }else{
+    const k=st.single;$('ttl').textContent=`統計表：${SC[k].name}嚴重度人數與百分比`;
+    let h='<thead><tr><th>年齡組</th>'+LV.map(l=>`<th>${l}</th>`).join('')+'<th>合計</th></tr></thead><tbody>';
+    AG.forEach((g,i)=>{const n=tot(k,i);h+=`<tr><td>${g}</td>`+SC[k].lv[i].map(c=>`<td>${c}（${f(c/n*100,1)}%）</td>`).join('')+`<td>${n}</td></tr>`});
+    $('tbl').innerHTML=h+'</tbody>';
+  }
+}
+function render(){st.mode=='mean'?chartMean():chartSev();table();}
+render();
+</script>
+</body>
+</html>
